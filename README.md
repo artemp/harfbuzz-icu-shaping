@@ -1,7 +1,7 @@
 harfbuzz-icu-shaping
 ====================
 
-I know this is apple vs oranges but hb_shape is very slow comparing to ```u_shapeArabic```. It can be incorrect usage or implementation... feel free to correct it.
+I know this is apples vs oranges but hb_shape is very slow comparing to ```u_shapeArabic```. It can be incorrect usage or implementation... feel free to correct it.
 
 ```bash
 ./bin/clang-darwin-4.2.1/release/harfbuzz-icu-test 1000
