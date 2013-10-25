@@ -1,0 +1,25 @@
+#
+local BOOST_DIR = "/opt/boost" ;
+local MAPNIK_DEPS_DIR = "/opt/mapnik_deps" ;
+
+lib icuuc : : <name>icuuc <search>/opt/icu/lib ;
+lib system : : <name>boost_system <search>$(BOOST_DIR)/lib ;
+lib timer : chrono : <name>boost_timer <search>$(BOOST_DIR)/lib ;
+lib chrono : system : <name>boost_chrono <search>$(BOOST_DIR)/lib ;
+lib harfbuzz : : <name>harfbuzz <search>$(MAPNIK_DEPS_DIR)/lib ;
+lib harfbuzz-icu : harfbuzz : <name>harfbuzz-icu <search>$(MAPNIK_DEPS_DIR)/lib ;
+lib freetype : : <name>freetype <search>$(MAPNIK_DEPS_DIR)/lib ;
+
+exe harfbuzz-icu-test :
+    main.cpp
+    .//timer
+    .//icuuc
+    .//harfbuzz
+    .//harfbuzz-icu
+    .//freetype
+    :
+    <include>$(BOOST_DIR)/include
+    <include>$(MAPNIK_DEPS_DIR)/include
+    <include>$(MAPNIK_DEPS_DIR)/include/freetype2
+    <include>/opt/icu/include
+    ;
