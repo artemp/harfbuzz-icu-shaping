@@ -25,20 +25,20 @@ extern "C"
 const char *texts[NUM_EXAMPLES] = {
     "Ленивый рыжий кот",
     "كسول الزنجبيل القط",
-    "懶惰的姜貓",
+    "懶惰的姜貓"
 };
 
 const hb_direction_t text_directions[NUM_EXAMPLES] = {
     HB_DIRECTION_LTR,
     HB_DIRECTION_RTL,
-    HB_DIRECTION_TTB,
+    HB_DIRECTION_TTB
 };
 
 
 const char *languages[NUM_EXAMPLES] = {
     "en",
     "ar",
-    "ch",
+    "ch"
 };
 
 const hb_script_t scripts[NUM_EXAMPLES] = {
@@ -48,7 +48,7 @@ const hb_script_t scripts[NUM_EXAMPLES] = {
 };
 
 enum {
-    ENGLISH=0, ARABIC, CHINESE
+    ENGLISH=0, ARABIC, CHINESE,
 };
 
 int main (int argc, char** argv)
@@ -119,8 +119,15 @@ int main (int argc, char** argv)
     }
 
     {
+        const char **shaper_list = hb_shape_list_shapers();
+        for ( ;*shaper_list; shaper_list++)
+        {
+            std::cerr << *shaper_list << std::endl;
+        }
+
         std::cerr << "Harfbuzz shaping" << std::endl;
         boost::timer::auto_cpu_timer t;
+        const char* const shapers[]  = { /*"ot",*/"fallback" };
         auto hb_buffer_deleter = [](hb_buffer_t * buffer) { hb_buffer_destroy(buffer);};
         const std::unique_ptr<hb_buffer_t, decltype(hb_buffer_deleter)> buffer(hb_buffer_create(),hb_buffer_deleter);
 
@@ -137,7 +144,8 @@ int main (int argc, char** argv)
                 hb_buffer_set_direction(buffer.get(), text_directions[j]);
                 hb_buffer_set_script(buffer.get(), scripts[j]);
                 hb_buffer_set_language(buffer.get(),hb_language_from_string(languages[j], std::strlen(languages[j])));
-                hb_shape(hb_ft_font[j], buffer.get(), 0, 0);
+                //hb_shape(hb_ft_font[j], buffer.get(), 0, 0);
+                hb_shape_full(hb_ft_font[j], buffer.get(), 0, 0, shapers);
                 unsigned num_glyphs = hb_buffer_get_length(buffer.get());
                 hb_glyph_info_t *glyphs = hb_buffer_get_glyph_infos(buffer.get(), nullptr);
                 //hb_glyph_position_t *positions = hb_buffer_get_glyph_positions(buffer.get(), nullptr);
