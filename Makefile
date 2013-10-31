@@ -5,10 +5,10 @@ LDFLAGS := $(LDFLAGS) # inherit from env
 
 all: harfbuzz-icu-bench
 
-harfbuzz-icu-bench: main.cpp
-	$(CXX) -o ./harfbuzz-icu-bench main.cpp $(CXXFLAGS) $(HB_CFLAGS) $(HB_LDFLAGS) $(LDFLAGS)
+harfbuzz-icu-bench: main.cpp Makefile
+	$(CXX) -o ./harfbuzz-icu-bench main.cpp -O2 -DNDEBUG -Wall $(CXXFLAGS) $(HB_CFLAGS) $(HB_LDFLAGS) $(LDFLAGS)
 
-test:
+test: harfbuzz-icu-bench
 	./harfbuzz-icu-bench 1000
 
 clean:
