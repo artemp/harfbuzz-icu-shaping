@@ -17,8 +17,10 @@ extern "C"
 #include <unicode/ushape.h>
 #include <unicode/ubidi.h>
 #include <unicode/schriter.h>
-//boost
-#include <boost/timer/timer.hpp>
+
+#include "timer.hpp"
+#include <cstdlib>
+#include <stdexcept>
 
 #define NUM_EXAMPLES 3
 
@@ -59,7 +61,7 @@ int main (int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    const unsigned NUM_ITER = std::stoi(argv[1]);
+    const unsigned NUM_ITER = atoi(argv[1]);
 
     // open first face in the font
     FT_Library ft_library = 0;
@@ -78,8 +80,8 @@ int main (int argc, char** argv)
     hb_ft_font[CHINESE] = hb_ft_font_create(ft_face[CHINESE], NULL);
 
     {
-        std::cerr << "ICU shaping" << std::endl;
-        boost::timer::auto_cpu_timer t;
+        std::cerr << "Starting ICU shaping:" << std::endl;
+        progress_timer timer1(std::clog,"ICU shaping done");
         UErrorCode err = U_ZERO_ERROR;
         for (unsigned i = 0; i < NUM_ITER; ++i)
         {
@@ -125,11 +127,10 @@ int main (int argc, char** argv)
             std::cerr << *shaper_list << std::endl;
         }
 
-        std::cerr << "Harfbuzz shaping" << std::endl;
-        boost::timer::auto_cpu_timer t;
+        std::cerr << "Starting Harfbuzz shaping" << std::endl;
+        progress_timer timer2(std::clog,"Harfbuzz shaping done");
         const char* const shapers[]  = { /*"ot",*/"fallback" };
-        auto hb_buffer_deleter = [](hb_buffer_t * buffer) { hb_buffer_destroy(buffer);};
-        const std::unique_ptr<hb_buffer_t, decltype(hb_buffer_deleter)> buffer(hb_buffer_create(),hb_buffer_deleter);
+        hb_buffer_t *buffer(hb_buffer_create());
 
         for (unsigned i = 0; i < NUM_ITER; ++i)
         {
@@ -137,18 +138,18 @@ int main (int argc, char** argv)
             {
                 UnicodeString text = UnicodeString::fromUTF8(texts[j]);
                 int32_t length = text.length();
-                hb_buffer_clear_contents(buffer.get());
+                hb_buffer_clear_contents(buffer);
                 //hb_buffer_set_unicode_funcs(buffer.get(), hb_icu_get_unicode_funcs());
-                hb_buffer_pre_allocate(buffer.get(), length);
-                hb_buffer_add_utf16(buffer.get(), text.getBuffer(), text.length(), 0, length);
-                hb_buffer_set_direction(buffer.get(), text_directions[j]);
-                hb_buffer_set_script(buffer.get(), scripts[j]);
-                hb_buffer_set_language(buffer.get(),hb_language_from_string(languages[j], std::strlen(languages[j])));
+                hb_buffer_pre_allocate(buffer, length);
+                hb_buffer_add_utf16(buffer, text.getBuffer(), text.length(), 0, length);
+                hb_buffer_set_direction(buffer, text_directions[j]);
+                hb_buffer_set_script(buffer, scripts[j]);
+                hb_buffer_set_language(buffer,hb_language_from_string(languages[j], std::strlen(languages[j])));
                 //hb_shape(hb_ft_font[j], buffer.get(), 0, 0);
-                hb_shape_full(hb_ft_font[j], buffer.get(), 0, 0, shapers);
-                unsigned num_glyphs = hb_buffer_get_length(buffer.get());
-                hb_glyph_info_t *glyphs = hb_buffer_get_glyph_infos(buffer.get(), nullptr);
-                //hb_glyph_position_t *positions = hb_buffer_get_glyph_positions(buffer.get(), nullptr);
+                hb_shape_full(hb_ft_font[j], buffer, 0, 0, shapers);
+                unsigned num_glyphs = hb_buffer_get_length(buffer);
+                hb_glyph_info_t *glyphs = hb_buffer_get_glyph_infos(buffer, NULL);
+                //hb_glyph_position_t *positions = hb_buffer_get_glyph_positions(buffer.get(), NULL);
                 for (unsigned k=0; k<num_glyphs; ++k)
                 {
                     int32_t glyph_index = glyphs[k].codepoint;
@@ -160,6 +161,7 @@ int main (int argc, char** argv)
                 if (i == 0) std::cerr << std::endl;
             }
         }
+        hb_buffer_destroy(buffer);
     }
 
     // cleanup
